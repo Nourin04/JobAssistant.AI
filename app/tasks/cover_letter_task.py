@@ -14,7 +14,8 @@ def get_cover_letter_task(agent, resume_data, job_description):
         Requirements:
 - Length MUST be between 100-120 words (strict)
 - Start with a strong, non-generic opening (no "I am writing to express")
-- Use the candidate's name EXACTLY as provided: {resume_data.get("name")}
+- WRITE ENTIRELY IN THE FIRST PERSON ("I", "my", "me"). NEVER use the third person ("he", "she", "the candidate").
+- Sign off the letter with the candidate's name exactly as provided: {resume_data.get("name")}
 - Do NOT invent or modify the name
 - Do NOT use placeholders like [Your Name]
 - Highlight 2–3 key achievements with measurable impact (numbers preferred)
