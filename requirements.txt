@@ -6,5 +6,6 @@ uvicorn
 groq 
 langchain-groq 
 python-dotenv
-chromadb 
 sentence-transformers
+pypdf
+python-multipart
