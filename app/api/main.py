@@ -96,7 +96,16 @@ async def match_job(data: dict):
     crew = Crew(agents=[matcher], tasks=[task])
     result = crew.kickoff()
 
-    return {"result": result.raw}
+    import re
+    parsed_result = result.raw
+    match = re.search(r"\{.*\}", result.raw, re.DOTALL)
+    if match:
+        try:
+            parsed_result = json.loads(match.group(0))
+        except json.JSONDecodeError:
+            pass
+
+    return {"result": parsed_result}
 
 
 # ✉️ Cover Letter

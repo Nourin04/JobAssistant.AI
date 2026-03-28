@@ -216,8 +216,50 @@ function App() {
               <button className="btn-secondary" onClick={() => setStep(2)}>Adjust Description</button>
             </header>
 
-            <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8', color: '#e2e8f0', background: 'rgba(0,0,0,0.2)', padding: '2.5rem', borderRadius: '1.5rem', border: '1px solid var(--glass-border)', fontFamily: 'Inter, sans-serif' }}>
-              {matchResult}
+            <div style={{ background: 'rgba(0,0,0,0.2)', padding: '2.5rem', borderRadius: '1.5rem', border: '1px solid var(--glass-border)' }}>
+              {typeof matchResult === 'object' && matchResult !== null ? (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginBottom: '2rem' }}>
+                    <div style={{ width: '120px', height: '120px', borderRadius: '50%', background: `conic-gradient(var(--accent) ${matchResult.match_score}%, rgba(255,255,255,0.1) 0)`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                      <div style={{ position: 'absolute', width: '90px', height: '90px', background: 'var(--bg-deep)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                         <span style={{ fontSize: '2rem', fontWeight: '800' }}>{matchResult.match_score}%</span>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Overall Compatibility</h3>
+                      <p style={{ color: 'var(--text-muted)' }}>Based on skills, experience, and requirements.</p>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+                    <div>
+                      <h4 style={{ color: 'var(--accent)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <CheckCircle2 size={18} /> Matching Skills
+                      </h4>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        {matchResult.matching_skills?.map(s => <span key={s} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.3rem 0.8rem', borderRadius: '2rem', fontSize: '0.85rem', border: '1px solid rgba(16, 185, 129, 0.3)' }}>{s}</span>)}
+                      </div>
+                    </div>
+                    <div>
+                      <h4 style={{ color: '#ef4444', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <X size={18} /> Missing Skills
+                      </h4>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        {matchResult.missing_skills?.map(s => <span key={s} style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#f87171', padding: '0.3rem 0.8rem', borderRadius: '2rem', fontSize: '0.85rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}>{s}</span>)}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--glass-border)' }}>
+                    <h4 style={{ marginBottom: '0.5rem' }}>AI Evaluation Summary</h4>
+                    <p style={{ color: '#e2e8f0', lineHeight: '1.7' }}>{matchResult.summary}</p>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8', color: '#e2e8f0', fontFamily: 'Inter, sans-serif' }}>
+                  {matchResult}
+                </div>
+              )}
             </div>
 
             <footer style={{ marginTop: '3rem', display: 'flex', justifyContent: 'center', gap: '1.5rem' }}>
