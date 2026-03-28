@@ -36,6 +36,8 @@ This project demonstrates the integration of modern AI systems with scalable bac
 
 6. **Modern Web Interface**
    A responsive React-based frontend for uploading resumes, entering job descriptions, and viewing results.
+<img width="640" height="496" alt="image" src="https://github.com/user-attachments/assets/62e672c6-6519-4e66-a1c4-3d75ca8d7adc" />
+<img width="627" height="576" alt="image" src="https://github.com/user-attachments/assets/007912bc-c2ca-4d38-a4d0-7d5d178056b0" />
 
 ---
 
