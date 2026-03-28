@@ -1,0 +1,10 @@
+crewai 
+langchain 
+chromadb 
+fastapi 
+uvicorn 
+groq 
+langchain-groq 
+python-dotenv
+chromadb 
+sentence-transformers
