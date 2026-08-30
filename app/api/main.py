@@ -31,13 +31,22 @@ from app.tasks.cover_letter_task import get_cover_letter_task
 
 app = FastAPI(title="Job Assistant AI API")
 
-# CORS — read allowed origin from environment so the same codebase works
-# locally (localhost:5173) and in production (Vercel URL).
+# CORS configuration
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+
+# Parse comma-separated origins and normalize trailing slashes
+origins = [o.strip() for o in FRONTEND_URL.split(",") if o.strip()]
+final_origins = []
+for o in origins:
+    final_origins.append(o)
+    if o.endswith("/"):
+        final_origins.append(o[:-1])
+    else:
+        final_origins.append(o + "/")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_URL],
+    allow_origins=final_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
