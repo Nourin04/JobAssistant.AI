@@ -15,6 +15,10 @@ JobAssistant.AI runs three specialized AI agents in sequence:
 Parsed resume data is stored in a ChromaDB vector database using Sentence-Transformers embeddings, enabling semantic retrieval as context for downstream agents.
 
 ---
+<img width="866" height="719" alt="Screenshot 2026-08-30 at 5 13 14 PM" src="https://github.com/user-attachments/assets/b2d9846d-b097-4352-a35b-3478051ac3a9" />
+<img width="865" height="722" alt="Screenshot 2026-08-30 at 5 12 36 PM" src="https://github.com/user-attachments/assets/6fb40de3-6b40-49dd-8250-668363682577" />
+<img width="1045" height="721" alt="Screenshot 2026-08-30 at 5 12 12 PM" src="https://github.com/user-attachments/assets/355a056a-e6b9-48b2-8f49-c6a92649d823" />
+<img width="886" height="680" alt="Screenshot 2026-08-30 at 5 11 26 PM" src="https://github.com/user-attachments/assets/1c8f58dd-5d26-4933-b459-6f01cc9e0601" />
 
 ## Features
 
