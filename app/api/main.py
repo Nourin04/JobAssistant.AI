@@ -4,6 +4,14 @@ import shutil
 import os
 import json
 import time
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Patch CrewAI to avoid sending the unsupported cache_breakpoint parameter to Groq
+import crewai.llms.cache as _crewai_cache
+_crewai_cache.mark_cache_breakpoint = lambda msg: msg
 
 from crewai import Crew
 
@@ -38,7 +46,7 @@ async def root():
 
 # 📄 Upload Resume + Process
 @app.post("/analyze")
-async def analyze_resume(file: UploadFile = File(...)):
+def analyze_resume(file: UploadFile = File(...)):
     file_path = f"temp_{file.filename}"
 
     # Save file
@@ -86,7 +94,7 @@ async def analyze_resume(file: UploadFile = File(...)):
 
 # 🎯 Job Matching
 @app.post("/match")
-async def match_job(data: dict):
+def match_job(data: dict):
     resume_data = data["resume"]
     job_description = data["job_description"]
 
@@ -110,7 +118,7 @@ async def match_job(data: dict):
 
 # ✉️ Cover Letter
 @app.post("/cover-letter")
-async def generate_cover_letter(data: dict):
+def generate_cover_letter(data: dict):
     resume_data = data["resume"]
     job_description = data["job_description"]
 

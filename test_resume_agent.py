@@ -1,3 +1,6 @@
+import crewai.llms.cache as _crewai_cache
+_crewai_cache.mark_cache_breakpoint = lambda msg: msg
+
 from crewai import Crew
 from app.agents.resume_analyzer import get_resume_analyzer
 from app.tasks.resume_task import get_resume_task

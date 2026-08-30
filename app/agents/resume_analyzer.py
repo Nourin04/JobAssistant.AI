@@ -8,5 +8,6 @@ def get_resume_analyzer():
             "You are an expert HR AI system that analyzes resumes with high accuracy. "
             "You extract key details and present them in a structured format."
         ),
+        llm="groq/groq/compound-mini",
         verbose=True
     )
