@@ -18,6 +18,11 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
+# Pre-download the sentence-transformers model (~90MB) at build time.
+# Without this, the model downloads on first startup, which delays port binding
+# and causes Render to report "No open ports detected".
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+
 # Copy application source
 COPY app/ ./app/
 COPY main.py .
@@ -28,5 +33,6 @@ ENV PORT=8000
 
 EXPOSE $PORT
 
-# Run the FastAPI server
-CMD uvicorn app.api.main:app --host 0.0.0.0 --port $PORT
+# Use exec form so uvicorn receives OS signals (SIGTERM) correctly
+CMD ["sh", "-c", "uvicorn app.api.main:app --host 0.0.0.0 --port $PORT"]
+
