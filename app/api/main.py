@@ -32,10 +32,20 @@ from app.tasks.cover_letter_task import get_cover_letter_task
 app = FastAPI(title="Job Assistant AI API")
 
 # CORS configuration
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "")
 
-# Parse comma-separated origins and normalize trailing slashes
-origins = [o.strip() for o in FRONTEND_URL.split(",") if o.strip()]
+# Fallback values to support local dev and your Vercel deployment automatically
+origins = [
+    "http://localhost:5173",
+    "https://jobassistant-ai.vercel.app"
+]
+
+if FRONTEND_URL:
+    for o in FRONTEND_URL.split(","):
+        if o.strip():
+            origins.append(o.strip())
+
+# Normalize trailing slashes
 final_origins = []
 for o in origins:
     final_origins.append(o)
