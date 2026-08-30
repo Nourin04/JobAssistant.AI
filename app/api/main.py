@@ -130,12 +130,12 @@ def analyze_resume(request: Request, file: UploadFile = File(...)):
         match = re.search(r"\{.*\}", output_text, re.DOTALL)
 
         if not match:
-            return {"error": "Invalid JSON output"}
+            raise HTTPException(status_code=500, detail="Invalid JSON output from resume analyzer agent.")
 
         try:
             parsed = json.loads(match.group(0))
         except json.JSONDecodeError:
-            return {"error": "Failed to parse LLM output as JSON"}
+            raise HTTPException(status_code=500, detail="Failed to parse LLM output as JSON.")
 
         parsed["name"] = candidate_name
 
@@ -146,6 +146,12 @@ def analyze_resume(request: Request, file: UploadFile = File(...)):
             print(f"RAG storage failed: {e}")
 
         return parsed
+
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(error_trace)
+        raise HTTPException(status_code=500, detail=f"Analyzer error: {str(e)}")
 
     finally:
         # Always clean up the temp file
@@ -158,25 +164,30 @@ def analyze_resume(request: Request, file: UploadFile = File(...)):
 def match_job(request: Request, data: dict):
     _check_rate_limit(request)
 
-    resume_data = data["resume"]
-    job_description = data["job_description"]
+    try:
+        resume_data = data["resume"]
+        job_description = data["job_description"]
 
-    matcher = get_job_matcher()
-    task = get_job_match_task(matcher, resume_data, job_description)
+        matcher = get_job_matcher()
+        task = get_job_match_task(matcher, resume_data, job_description)
 
-    crew = Crew(agents=[matcher], tasks=[task])
-    result = crew.kickoff()
+        crew = Crew(agents=[matcher], tasks=[task])
+        result = crew.kickoff()
 
-    import re
-    parsed_result = result.raw
-    match = re.search(r"\{.*\}", result.raw, re.DOTALL)
-    if match:
-        try:
-            parsed_result = json.loads(match.group(0))
-        except json.JSONDecodeError:
-            pass
+        import re
+        parsed_result = result.raw
+        match = re.search(r"\{.*\}", result.raw, re.DOTALL)
+        if match:
+            try:
+                parsed_result = json.loads(match.group(0))
+            except json.JSONDecodeError:
+                pass
 
-    return {"result": parsed_result}
+        return {"result": parsed_result}
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Matcher error: {str(e)}")
 
 
 # Cover Letter
@@ -184,13 +195,18 @@ def match_job(request: Request, data: dict):
 def generate_cover_letter(request: Request, data: dict):
     _check_rate_limit(request)
 
-    resume_data = data["resume"]
-    job_description = data["job_description"]
+    try:
+        resume_data = data["resume"]
+        job_description = data["job_description"]
 
-    agent = get_cover_letter_generator()
-    task = get_cover_letter_task(agent, resume_data, job_description)
+        agent = get_cover_letter_generator()
+        task = get_cover_letter_task(agent, resume_data, job_description)
 
-    crew = Crew(agents=[agent], tasks=[task])
-    result = crew.kickoff()
+        crew = Crew(agents=[agent], tasks=[task])
+        result = crew.kickoff()
 
-    return {"cover_letter": result.raw}
+        return {"cover_letter": result.raw}
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Cover letter error: {str(e)}")
