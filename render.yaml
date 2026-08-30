@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: jobassistant-ai
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    # Auto-deploy whenever master branch is pushed
+    autoDeploy: true
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false          # Mark as secret — you set this manually in the Render dashboard
+      - key: FRONTEND_URL
+        sync: false          # Set to your Vercel URL after frontend is deployed

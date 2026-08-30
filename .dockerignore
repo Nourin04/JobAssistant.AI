@@ -1,0 +1,33 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Frontend — deployed separately on Vercel, not needed in backend image
+frontend/
+
+# Environment — never bake secrets into the image
+.env
+
+# Git
+.git/
+.gitignore
+
+# Test files
+test_*.py
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Logs and temp
+*.log
+temp_*.pdf
