@@ -3,10 +3,8 @@ import uuid
 from chromadb.utils import embedding_functions
 
 
-# Create embedding function
-embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
-    model_name="all-MiniLM-L6-v2"
-)
+# Create embedding function using ONNX runtime (extremely lightweight, no PyTorch needed)
+embedding_function = embedding_functions.ONNXMiniLM_L6_V2()
 
 # Initialize DB
 client = chromadb.Client()

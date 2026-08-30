@@ -18,10 +18,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Pre-download the sentence-transformers model (~90MB) at build time.
-# Without this, the model downloads on first startup, which delays port binding
-# and causes Render to report "No open ports detected".
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+# Pre-download the ONNX embedding model at build time.
+# Without this, the model downloads on first startup, which delays port binding.
+RUN python -c "from chromadb.utils import embedding_functions; embedding_functions.ONNXMiniLM_L6_V2()"
 
 # Copy application source
 COPY app/ ./app/
