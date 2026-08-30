@@ -17,6 +17,24 @@ const STEPS = [
   { id: 4, label: 'Letter' },
 ];
 
+// Session-based rate limit: 4 AI requests per browser session
+const SESSION_LIMIT = 4;
+const SESSION_KEY = 'ja_api_calls';
+
+function getSessionCalls() {
+  return parseInt(sessionStorage.getItem(SESSION_KEY) || '0', 10);
+}
+
+function incrementSessionCalls() {
+  const next = getSessionCalls() + 1;
+  sessionStorage.setItem(SESSION_KEY, String(next));
+  return next;
+}
+
+function getRemainingCalls() {
+  return Math.max(0, SESSION_LIMIT - getSessionCalls());
+}
+
 function App() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -27,6 +45,7 @@ function App() {
   const [coverLetter, setCoverLetter] = useState('');
   const [error, setError] = useState(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [remainingCalls, setRemainingCalls] = useState(getRemainingCalls);
 
   useEffect(() => {
     if (error) {
@@ -38,6 +57,10 @@ function App() {
   const handleUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    if (getRemainingCalls() <= 0) {
+      setError('Session limit reached (4 AI calls). Refresh the page to start a new session.');
+      return;
+    }
     const formData = new FormData();
     formData.append('file', file);
     setLoading(true);
@@ -45,10 +68,13 @@ function App() {
     setError(null);
     try {
       const resp = await axios.post(`${API_BASE}/analyze`, formData);
+      incrementSessionCalls();
+      setRemainingCalls(getRemainingCalls());
       setResumeData(resp.data);
       setStep(2);
     } catch (err) {
-      setError('Analysis failed. Ensure the backend is running and the PDF is valid.');
+      const msg = err.response?.data?.detail || 'Analysis failed. Ensure the backend is running and the PDF is valid.';
+      setError(msg);
       console.error(err);
     } finally {
       setLoading(false);
@@ -60,6 +86,10 @@ function App() {
       setError('Please paste a job description first.');
       return;
     }
+    if (getRemainingCalls() <= 0) {
+      setError('Session limit reached (4 AI calls). Refresh the page to start a new session.');
+      return;
+    }
     setLoading(true);
     setLoadingLabel('Evaluating job compatibility...');
     setError(null);
@@ -68,10 +98,13 @@ function App() {
         resume: resumeData,
         job_description: jobDescription,
       });
+      incrementSessionCalls();
+      setRemainingCalls(getRemainingCalls());
       setMatchResult(resp.data.result);
       setStep(3);
     } catch (err) {
-      setError('Job matching failed. Check your connection.');
+      const msg = err.response?.data?.detail || 'Job matching failed. Check your connection.';
+      setError(msg);
       console.error(err);
     } finally {
       setLoading(false);
@@ -79,6 +112,10 @@ function App() {
   };
 
   const handleGenerateCoverLetter = async () => {
+    if (getRemainingCalls() <= 0) {
+      setError('Session limit reached (4 AI calls). Refresh the page to start a new session.');
+      return;
+    }
     setLoading(true);
     setLoadingLabel('Crafting your cover letter...');
     setError(null);
@@ -87,10 +124,13 @@ function App() {
         resume: resumeData,
         job_description: jobDescription,
       });
+      incrementSessionCalls();
+      setRemainingCalls(getRemainingCalls());
       setCoverLetter(resp.data.cover_letter);
       setStep(4);
     } catch (err) {
-      setError('Cover letter generation failed.');
+      const msg = err.response?.data?.detail || 'Cover letter generation failed.';
+      setError(msg);
       console.error(err);
     } finally {
       setLoading(false);
@@ -161,6 +201,27 @@ function App() {
         <div className="copy-toast">
           <Check size={15} />
           <span>Copied to clipboard!</span>
+        </div>
+      )}
+
+      {/* Rate Limit Banner */}
+      {remainingCalls <= SESSION_LIMIT && (
+        <div
+          style={{
+            textAlign: 'center',
+            marginBottom: '1.5rem',
+            padding: '0.6rem 1.25rem',
+            borderRadius: '0.75rem',
+            border: `1px solid ${remainingCalls === 0 ? 'rgba(239,68,68,0.3)' : remainingCalls === 1 ? 'rgba(234,179,8,0.3)' : 'rgba(255,255,255,0.07)'}`,
+            background: remainingCalls === 0 ? 'rgba(239,68,68,0.06)' : remainingCalls === 1 ? 'rgba(234,179,8,0.05)' : 'rgba(255,255,255,0.02)',
+            fontSize: '0.82rem',
+            color: remainingCalls === 0 ? '#fca5a5' : remainingCalls === 1 ? '#fde68a' : 'var(--text-muted)',
+            fontWeight: 500,
+          }}
+        >
+          {remainingCalls === 0
+            ? 'Session limit reached. Refresh the page to start a new session.'
+            : `${remainingCalls} AI ${remainingCalls === 1 ? 'request' : 'requests'} remaining this session.`}
         </div>
       )}
 

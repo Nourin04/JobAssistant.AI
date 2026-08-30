@@ -1,5 +1,7 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from collections import defaultdict
+from datetime import datetime, timedelta
 import shutil
 import os
 import json
@@ -30,7 +32,7 @@ from app.tasks.cover_letter_task import get_cover_letter_task
 
 app = FastAPI(title="Job Assistant AI API")
 
-# 🌐 CORS Configuration
+# CORS Configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # In production, replace with specific origins
@@ -39,14 +41,40 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ---------------------------------------------------------------------------
+# Server-side rate limiting: max 10 AI requests per IP per hour
+# Acts as a secondary guard in addition to the frontend session limit.
+# ---------------------------------------------------------------------------
+RATE_LIMIT_MAX = 10
+RATE_LIMIT_WINDOW = timedelta(hours=1)
+_rate_counters: dict[str, list[datetime]] = defaultdict(list)
+
+def _check_rate_limit(request: Request):
+    """Raises HTTP 429 if the caller has exceeded the server-side rate limit."""
+    ip = request.client.host
+    now = datetime.utcnow()
+    window_start = now - RATE_LIMIT_WINDOW
+    # Prune timestamps outside the rolling window
+    _rate_counters[ip] = [t for t in _rate_counters[ip] if t > window_start]
+    if len(_rate_counters[ip]) >= RATE_LIMIT_MAX:
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                f"Rate limit exceeded. You may make at most {RATE_LIMIT_MAX} "
+                "AI requests per hour. Please try again later."
+            ),
+        )
+    _rate_counters[ip].append(now)
+
 @app.get("/")
 async def root():
     return {"message": "Job Assistant AI API is running"}
 
 
-# 📄 Upload Resume + Process
+# Upload Resume + Process
 @app.post("/analyze")
-def analyze_resume(file: UploadFile = File(...)):
+def analyze_resume(request: Request, file: UploadFile = File(...)):
+    _check_rate_limit(request)
     file_path = f"temp_{file.filename}"
 
     # Save file
@@ -92,9 +120,10 @@ def analyze_resume(file: UploadFile = File(...)):
     return parsed
 
 
-# 🎯 Job Matching
+# Job Matching
 @app.post("/match")
-def match_job(data: dict):
+def match_job(request: Request, data: dict):
+    _check_rate_limit(request)
     resume_data = data["resume"]
     job_description = data["job_description"]
 
@@ -116,9 +145,10 @@ def match_job(data: dict):
     return {"result": parsed_result}
 
 
-# ✉️ Cover Letter
+# Cover Letter
 @app.post("/cover-letter")
-def generate_cover_letter(data: dict):
+def generate_cover_letter(request: Request, data: dict):
+    _check_rate_limit(request)
     resume_data = data["resume"]
     job_description = data["job_description"]
 

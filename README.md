@@ -1,43 +1,31 @@
+# JobAssistant.AI
 
+A full-stack AI application that automates the job application workflow. It analyzes a PDF resume, evaluates compatibility against a job description, and generates a tailored cover letter — all through a multi-agent AI pipeline powered by CrewAI and Groq.
 
-# Job Assistant AI
+---
 
-Job Assistant AI is a full-stack AI-powered application designed to streamline and automate the job application process. The system leverages multi-agent architectures, Large Language Models (LLMs), and Retrieval-Augmented Generation (RAG) to analyze resumes, evaluate job compatibility, and generate personalized cover letters.
+## Overview
 
-This project demonstrates the integration of modern AI systems with scalable backend services and a responsive frontend interface.
+JobAssistant.AI runs three specialized AI agents in sequence:
+
+1. A resume agent that extracts structured candidate data from a PDF.
+2. A job matcher agent that compares the candidate profile against a job description and produces a compatibility score, matched skills, missing skills, and a summary.
+3. A cover letter agent that generates a concise, targeted cover letter (200-250 words) following a professional structure.
+
+Parsed resume data is stored in a ChromaDB vector database using Sentence-Transformers embeddings, enabling semantic retrieval as context for downstream agents.
 
 ---
 
 ## Features
 
-1. **Resume Parsing and Analysis**
-   Extracts structured information such as skills, experience, education, and projects from PDF resumes using AI agents.
-
-2. **Retrieval-Augmented Generation (RAG)**
-   Stores parsed resume data in a ChromaDB vector database and enables semantic retrieval for downstream tasks.
-
-3. **Job Compatibility Matching**
-   Compares candidate profiles with job descriptions to generate:
-
-   * Match score (0–100)
-   * Matching skills
-   * Missing skills
-   * Contextual evaluation summary
-
-4. **Automated Cover Letter Generation**
-   Generates concise, personalized cover letters tailored to the job description and candidate profile.
-
-5. **Multi-Agent AI System (CrewAI)**
-   Uses specialized agents for:
-
-   * Resume analysis
-   * Job matching
-   * Cover letter generation
-
-6. **Modern Web Interface**
-   A responsive React-based frontend for uploading resumes, entering job descriptions, and viewing results.
-<img width="640" height="496" alt="image" src="https://github.com/user-attachments/assets/62e672c6-6519-4e66-a1c4-3d75ca8d7adc" />
-<img width="627" height="576" alt="image" src="https://github.com/user-attachments/assets/007912bc-c2ca-4d38-a4d0-7d5d178056b0" />
+- PDF resume parsing and structured data extraction (name, skills, experience, education, projects)
+- Job compatibility scoring (0-100) with matched and missing skill breakdowns and an AI evaluation summary
+- Automated cover letter generation tailored to the specific job description and candidate profile
+- RAG pipeline using ChromaDB and Sentence-Transformers for semantic context retrieval
+- Multi-agent orchestration via CrewAI with dedicated agents per task
+- Session-based rate limiting on the frontend (4 AI requests per browser session)
+- Server-side rate limiting on the backend (10 requests per IP per hour)
+- Responsive, glassmorphic dark UI built with React and Vanilla CSS
 
 ---
 
@@ -45,118 +33,102 @@ This project demonstrates the integration of modern AI systems with scalable bac
 
 ### Backend
 
-* Python 3.12+
-* FastAPI (API framework)
-* CrewAI (multi-agent orchestration)
-* LangChain (LLM integration utilities)
-* ChromaDB (vector database for RAG)
-* Groq API (LLM inference using LLaMA 3 models)
-* Sentence-Transformers (text embeddings)
-* PyPDF (PDF text extraction)
+| Component | Technology |
+|---|---|
+| API framework | FastAPI |
+| Multi-agent orchestration | CrewAI |
+| LLM inference | Groq API (compound-mini) |
+| Vector database | ChromaDB |
+| Text embeddings | Sentence-Transformers |
+| PDF extraction | PyPDF |
+| Runtime | Python 3.13 |
 
 ### Frontend
 
-* React 18
-* Vite (build tool)
-* Axios (API communication)
-* Vanilla CSS (custom UI styling)
+| Component | Technology |
+|---|---|
+| Framework | React 18 |
+| Build tool | Vite |
+| HTTP client | Axios |
+| Styling | Vanilla CSS |
 
 ---
 
-## System Architecture
+## Project Structure
 
 ```
-Frontend (React)
-        ↓
-FastAPI Backend
-        ↓
-CrewAI Agents
-        ↓
-Groq LLM (LLaMA 3)
-        ↓
-ChromaDB (RAG Layer)
+JobAssistant.AI/
+├── app/
+│   ├── api/
+│   │   └── main.py              # FastAPI routes and rate limiting
+│   ├── agents/
+│   │   ├── resume_analyzer.py   # Resume analysis agent
+│   │   ├── job_matcher.py       # Job compatibility agent
+│   │   └── cover_letter_generator.py  # Cover letter agent
+│   ├── tasks/
+│   │   ├── resume_task.py       # Resume extraction task config
+│   │   ├── job_match_task.py    # Job matching task config
+│   │   └── cover_letter_task.py # Cover letter task config
+│   ├── services/
+│   │   └── resume_parser.py     # PDF text extraction and name detection
+│   └── rag/
+│       └── vector_store.py      # ChromaDB store and retrieval
+├── frontend/
+│   ├── src/
+│   │   ├── App.jsx              # Main React application
+│   │   ├── App.css              # Component styles
+│   │   └── index.css            # Global styles and design tokens
+│   └── package.json
+├── requirements.txt
+└── .env                         # API keys (not committed)
 ```
-
-### Components
-
-1. **API Layer (`app/api/main.py`)**
-
-   * Handles HTTP requests
-   * Manages file uploads
-   * Orchestrates AI workflows
-
-2. **Agent Layer (`app/agents/`, `app/tasks/`)**
-
-   * Resume Analyzer Agent
-   * Job Matcher Agent
-   * Cover Letter Generator Agent
-
-3. **Data Layer (`app/services/`, `app/rag/`)**
-
-   * PDF parsing and preprocessing
-   * Vector storage and retrieval
 
 ---
 
-## Setup Instructions
+## Setup
 
 ### Prerequisites
 
-* Python 3.12+
-* Node.js (v18+)
-* npm
-* Groq API Key
+- Python 3.13
+- Node.js 18+
+- A [Groq API key](https://console.groq.com) (free tier supported)
 
----
-
-### 1. Clone Repository
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/Nourin04/JobAssistant.AI.git
 cd JobAssistant.AI
 ```
 
----
+### 2. Configure environment variables
 
-### 2. Environment Configuration
-
-Create `.env` file:
+Create a `.env` file in the project root:
 
 ```env
 GROQ_API_KEY=your_groq_api_key_here
 ```
 
----
-
-### 3. Backend Setup
+### 3. Set up the backend
 
 ```bash
-python -m venv .venv
-.venv\Scripts\activate   # Windows
+python3.13 -m venv .venv
+source .venv/bin/activate        # macOS / Linux
+# .venv\Scripts\activate         # Windows
+
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Run backend:
+Start the backend server:
 
 ```bash
 python -m uvicorn app.api.main:app --reload
 ```
 
-API available at:
+The API will be available at `http://localhost:8000`.
+Interactive API docs: `http://localhost:8000/docs`
 
-```
-http://localhost:8000
-```
-
-Swagger UI:
-
-```
-http://localhost:8000/docs
-```
-
----
-
-### 4. Frontend Setup
+### 4. Set up the frontend
 
 ```bash
 cd frontend
@@ -164,152 +136,79 @@ npm install
 npm run dev
 ```
 
-Frontend available at:
-
-```
-http://localhost:5173
-```
+The frontend will be available at `http://localhost:5173`.
 
 ---
 
 ## Usage
 
-1. Upload a PDF resume
-2. System extracts structured candidate profile
-3. Enter job description
-4. View:
+1. Open the app in a browser at `http://localhost:5173`.
+2. Upload a PDF resume on the first screen.
+3. Paste a job description into the text area on the second screen.
+4. Review the compatibility report — match score, matched skills, skill gaps, and AI summary.
+5. Generate a tailored cover letter and copy or download it.
 
-   * Match score
-   * Skill analysis
-5. Generate personalized cover letter
-
----
-
-## API Endpoints
-
-* `GET /` – Health check
-* `POST /analyze` – Resume parsing
-* `POST /match` – Job compatibility analysis
-* `POST /cover-letter` – Cover letter generation
+Each browser session allows 4 AI requests. Refreshing the page resets the session counter.
 
 ---
 
-## Key Implementation Details
+## API Reference
 
-### 1. Multi-Agent Workflow
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/` | Health check |
+| POST | `/analyze` | Upload a PDF resume and extract structured data |
+| POST | `/match` | Compare a resume profile against a job description |
+| POST | `/cover-letter` | Generate a tailored cover letter |
 
-Each task is handled by a dedicated agent:
+### Rate Limits
 
-* Resume Analyzer → Extracts structured data
-* Job Matcher → Evaluates compatibility
-* Cover Letter Generator → Generates content
+- Frontend: 4 AI requests per browser session (enforced via `sessionStorage`)
+- Backend: 10 requests per IP per hour (in-memory rolling window)
 
----
-
-### 2. RAG Pipeline
-
-* Resume data converted to embeddings
-* Stored in ChromaDB
-* Retrieved context improves reasoning
+Requests exceeding the server limit return HTTP `429 Too Many Requests`.
 
 ---
 
-### 3. Groq LLM Integration
+## Design Decisions
 
-* Uses LLaMA 3 models via Groq API
-* Provides fast inference without GPU dependency
+**Synchronous FastAPI handlers**
+CrewAI's `kickoff()` is synchronous and CPU-blocking. Defining endpoint handlers as `def` (not `async def`) causes FastAPI to automatically run them in a thread pool executor, which avoids blocking the main asyncio event loop.
 
----
+**CrewAI cache patch**
+The current version of CrewAI injects a `cache_breakpoint` property into LLM messages. Groq's API rejects this as an unsupported parameter. A one-line monkey patch applied at startup disables this behavior:
+```python
+import crewai.llms.cache as _crewai_cache
+_crewai_cache.mark_cache_breakpoint = lambda msg: msg
+```
 
-### 4. JSON Structuring
+**Cover letter structure**
+The cover letter agent is prompted to produce a 200-250 word letter with a fixed structure: header, salutation, opening hook, 2 evidence paragraphs tied to the job description, closing call to action, and sign-off. Hallucination is explicitly prohibited — the agent may only reference experience and projects present in the parsed resume data.
 
-* Strict prompt engineering ensures structured outputs
-* Regex-based cleanup handles LLM inconsistencies
-
----
-
-## Challenges Faced and Solutions
-
-### 1. LLM Output Not in Valid JSON
-
-**Issue:** Responses included extra text or formatting
-**Solution:**
-
-* Enforced strict prompt rules
-* Implemented regex-based JSON extraction
+**Dual-layer rate limiting**
+Frontend session limits prevent accidental rapid-fire submissions that would exhaust Groq free-tier tokens. Backend IP limits provide a secondary guard that applies regardless of the client.
 
 ---
 
-### 2. Name Hallucination in Cover Letters
+## Known Limitations
 
-**Issue:** Model generated incorrect candidate names
-**Solution:**
-
-* Extracted name directly from resume text
-* Injected into structured data
-* Enforced prompt constraints
+- Rate limit counters are in-memory on the backend and reset on server restart. A persistent store (Redis, database) would be needed for production use.
+- The `time.sleep(10)` before the cover letter endpoint is a conservative delay to avoid Groq token-per-minute limits. This can be reduced or removed if the account tier allows higher throughput.
+- PDF extraction quality depends on the formatting of the source document. Scanned PDFs without embedded text are not supported.
 
 ---
 
-### 3. Nested JSON Handling
+## Future Work
 
-**Issue:** Resume fields (experience, projects) returned as dictionaries
-**Solution:**
-
-* Implemented safe parsing logic
-* Converted nested objects to readable strings
-
----
-
-### 4. Groq API Rate Limits
-
-**Issue:** Token limits exceeded during multiple agent calls
-**Solution:**
-
-* Added delay (`time.sleep`)
-* Reduced output length (cover letter constraints)
+- User authentication and session persistence
+- Job history and saved cover letters
+- LinkedIn job description import
+- Deployment configuration (Render backend, Vercel frontend)
+- OCR support for scanned PDFs
+- Redis-backed rate limiting for production
 
 ---
 
-### 5. Dependency and Environment Issues
+## License
 
-**Issue:** Package conflicts and missing modules
-**Solution:**
-
-* Used virtual environments
-* Ensured proper installation inside `.venv`
-
----
-
-### 6. CrewAI Output Handling
-
-**Issue:** Returned object instead of string (`CrewOutput`)
-**Solution:**
-
-* Used `.raw` attribute for parsing
-
----
-
-## Improvements and Future Work
-
-* Add authentication (user accounts)
-* Store user history and previous analyses
-* Improve UI with component libraries (e.g., Tailwind)
-* Add job scraping integration (LinkedIn APIs)
-* Deploy backend and frontend (Render/Vercel)
-* Add caching for LLM responses
-* Improve resume parsing with OCR for scanned PDFs
-
----
-
-## Conclusion
-
-Job Assistant AI demonstrates a complete AI-powered workflow integrating:
-
-* Multi-agent systems
-* LLM-based reasoning
-* Retrieval-Augmented Generation
-* Full-stack development
-
-This project reflects practical application of modern AI engineering principles and scalable system design.
-
+This project is for personal and educational use.
