@@ -3,8 +3,9 @@ import axios from 'axios';
 import { 
   Upload, FileText, Target, Send, CheckCircle2, 
   Loader2, Download, Copy, RefreshCcw, Briefcase, 
-  Cpu, Award, ChevronRight, AlertCircle, X 
+  Award, ChevronRight, AlertCircle, X, Check
 } from 'lucide-react';
+import './App.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -16,6 +17,7 @@ function App() {
   const [matchResult, setMatchResult] = useState(null);
   const [coverLetter, setCoverLetter] = useState('');
   const [error, setError] = useState(null);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   // Auto-clear error after 5s
   useEffect(() => {
@@ -87,8 +89,24 @@ function App() {
     }
   };
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(coverLetter);
+    setCopySuccess(true);
+    setTimeout(() => setCopySuccess(false), 2000);
+  };
+
+  const handleDownload = () => {
+    const element = document.createElement("a");
+    const file = new Blob([coverLetter], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    element.download = `${resumeData?.name?.replace(/\s+/g, '_') || "Candidate"}_Cover_Letter.txt`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
+
   const renderStepIndicator = () => (
-    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginBottom: '3rem' }}>
+    <div className="step-indicator">
       {[1, 2, 3, 4].map(s => (
         <div key={s} className={`step-dot ${step === s ? 'active' : ''}`} />
       ))}
@@ -99,22 +117,30 @@ function App() {
     <div className="max-w-container">
       {/* Notifications */}
       {error && (
-        <div style={{ position: 'fixed', top: '2rem', right: '2rem', background: '#ef4444', color: 'white', padding: '1rem 1.5rem', borderRadius: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', zIndex: 1000, boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)', animation: 'slideUp 0.3s ease-out' }}>
+        <div className="toast-error">
           <AlertCircle size={20} />
           <span>{error}</span>
           <X size={18} style={{ cursor: 'pointer', marginLeft: '1rem' }} onClick={() => setError(null)} />
         </div>
       )}
 
+      {/* Copy Success Toast */}
+      {copySuccess && (
+        <div className="copy-toast">
+          <Check size={18} />
+          <span>Copied to Clipboard!</span>
+        </div>
+      )}
+
       {/* Header */}
-      <header style={{ textAlign: 'center', marginBottom: '5rem' }} className="animate-slide-up">
-        <div style={{ display: 'inline-flex', padding: '0.5rem 1rem', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '2rem', color: 'var(--primary)', fontStyle: '0.75rem', fontWeight: '600', marginBottom: '1.5rem', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+      <header className="header-container animate-slide-up">
+        <div className="badge-tag">
           Next-Gen AI Career Suite
         </div>
-        <h1 className="title-gradient" style={{ fontSize: '4.5rem', marginBottom: '1.5rem' }}>
+        <h1 className="title-gradient main-title">
           JobAssistant<span style={{ color: 'var(--primary)' }}>.ai</span>
         </h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '1.25rem', maxWidth: '600px', margin: '0 auto' }}>
+        <p className="header-subtitle">
           High-performance resume analysis and job matching powered by CrewAI and advanced LLMs.
         </p>
       </header>
@@ -124,13 +150,13 @@ function App() {
       <main className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
         {/* Step 1: Upload */}
         {step === 1 && (
-          <div className="premium-card" style={{ maxWidth: '700px', margin: '0 auto' }}>
+          <div className="premium-card upload-card">
             <div className="upload-zone" onClick={() => document.getElementById('file-input').click()}>
-              <div style={{ width: '80px', height: '80px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '1.5rem', display: 'flex', alignItems: 'center', justifySelf: 'center', margin: '0 auto 2rem', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
-                <Upload size={32} color="var(--primary)" style={{ margin: '0 auto' }} />
+              <div className="upload-icon-wrapper">
+                <Upload size={32} color="var(--primary)" />
               </div>
               <h2 style={{ marginBottom: '1rem' }}>Drop your experience here</h2>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '2.5rem' }}>Upload your PDF resume to start the AI analysis.</p>
+              <p className="text-muted" style={{ marginBottom: '2.5rem' }}>Upload your PDF resume to start the AI analysis.</p>
               
               <input type="file" id="file-input" hidden onChange={handleUpload} accept=".pdf" />
               <button className="btn-action" style={{ margin: '0 auto' }}>
@@ -138,14 +164,14 @@ function App() {
                 {loading ? 'Analyzing Profile...' : 'Upload Resume'}
               </button>
             </div>
-            <div style={{ marginTop: '3rem', borderTop: '1px solid var(--glass-border)', paddingTop: '2rem', display: 'flex', justifyContent: 'space-around' }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>3.5s</div>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Avg. Analysis</div>
+            <div className="stats-grid">
+              <div className="stat-item">
+                <div className="stat-val">3.5s</div>
+                <div className="stat-label">Avg. Analysis</div>
               </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>98%</div>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Extraction Accuracy</div>
+              <div className="stat-item">
+                <div className="stat-val">98%</div>
+                <div className="stat-label">Extraction Accuracy</div>
               </div>
             </div>
           </div>
@@ -153,29 +179,29 @@ function App() {
 
         {/* Step 2: Analysis Display & Job Input */}
         {step === 2 && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '2rem' }}>
-            <aside className="premium-card" style={{ padding: '2rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <CheckCircle2 size={20} color="white" />
+          <div className="dashboard-grid">
+            <aside className="premium-card aside-card">
+              <div className="status-badge">
+                <div className="status-icon">
+                  <CheckCircle2 size={20} />
                 </div>
                 <h3>Profile Sync'd</h3>
               </div>
 
-              <div style={{ marginBottom: '2rem' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Candidate</label>
-                <div style={{ fontSize: '1.25rem', fontWeight: '600' }}>{resumeData?.name}</div>
+              <div className="info-group">
+                <span className="info-label">Candidate</span>
+                <div className="info-value">{resumeData?.name}</div>
               </div>
 
-              <div style={{ marginBottom: '2rem' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Expertise Highlights</label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div className="info-group">
+                <span className="info-label">Expertise Highlights</span>
+                <div className="tags-container">
                   {resumeData?.skills?.map(s => <span key={s} className="skill-tag">{s}</span>)}
                 </div>
               </div>
 
-              <button className="btn-secondary" style={{ width: '100%' }} onClick={() => setStep(1)}>
-                <RefreshCcw size={16} style={{ marginRight: '10px' }} /> Replace Resume
+              <button className="btn-secondary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => setStep(1)}>
+                <RefreshCcw size={16} style={{ marginRight: '8px', display: 'inline' }} /> Replace Resume
               </button>
             </aside>
 
@@ -183,7 +209,7 @@ function App() {
               <h2 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <Target size={24} color="var(--primary)" /> Find Your Match
               </h2>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Paste the job description below. Our AI will simulate a hiring panel to evaluate your fit.</p>
+              <p className="text-muted" style={{ marginBottom: '2rem' }}>Paste the job description below. Our AI will simulate a hiring panel to evaluate your fit.</p>
               
               <textarea 
                 className="textarea-premium" 
@@ -206,63 +232,63 @@ function App() {
         {/* Step 3: Match Result */}
         {step === 3 && (
           <div className="premium-card animate-slide-up">
-            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '2rem' }}>
+            <header className="report-header">
               <div>
-                <h2 style={{ marginBottom: '0.5rem' }}>Match Intelligence Report</h2>
-                <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <h2>Match Intelligence Report</h2>
+                <div className="report-subtitle">
                   <Briefcase size={16} /> Evaluation against provided Job Description
                 </div>
               </div>
               <button className="btn-secondary" onClick={() => setStep(2)}>Adjust Description</button>
             </header>
 
-            <div style={{ background: 'rgba(0,0,0,0.2)', padding: '2.5rem', borderRadius: '1.5rem', border: '1px solid var(--glass-border)' }}>
+            <div className="report-body">
               {typeof matchResult === 'object' && matchResult !== null ? (
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginBottom: '2rem' }}>
-                    <div style={{ width: '120px', height: '120px', borderRadius: '50%', background: `conic-gradient(var(--accent) ${matchResult.match_score}%, rgba(255,255,255,0.1) 0)`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                      <div style={{ position: 'absolute', width: '90px', height: '90px', background: 'var(--bg-deep)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                         <span style={{ fontSize: '2rem', fontWeight: '800' }}>{matchResult.match_score}%</span>
+                  <div className="gauge-row">
+                    <div className="radial-gauge" style={{ background: `conic-gradient(var(--accent) ${matchResult.match_score}%, rgba(255,255,255,0.1) 0)` }}>
+                      <div className="radial-gauge-inner">
+                         <span className="gauge-val">{matchResult.match_score}%</span>
                       </div>
                     </div>
-                    <div>
-                      <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Overall Compatibility</h3>
-                      <p style={{ color: 'var(--text-muted)' }}>Based on skills, experience, and requirements.</p>
+                    <div className="gauge-info">
+                      <h3>Overall Compatibility</h3>
+                      <p className="text-muted">Based on skills, experience, and requirements.</p>
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
-                    <div>
-                      <h4 style={{ color: 'var(--accent)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="skills-split-grid">
+                    <div className="skills-column match">
+                      <h4>
                         <CheckCircle2 size={18} /> Matching Skills
                       </h4>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                        {matchResult.matching_skills?.map(s => <span key={s} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.3rem 0.8rem', borderRadius: '2rem', fontSize: '0.85rem', border: '1px solid rgba(16, 185, 129, 0.3)' }}>{s}</span>)}
+                      <div className="tags-container">
+                        {matchResult.matching_skills?.map(s => <span key={s} className="badge-green">{s}</span>)}
                       </div>
                     </div>
-                    <div>
-                      <h4 style={{ color: '#ef4444', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div className="skills-column missing">
+                      <h4>
                         <X size={18} /> Missing Skills
                       </h4>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                        {matchResult.missing_skills?.map(s => <span key={s} style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#f87171', padding: '0.3rem 0.8rem', borderRadius: '2rem', fontSize: '0.85rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}>{s}</span>)}
+                      <div className="tags-container">
+                        {matchResult.missing_skills?.map(s => <span key={s} className="badge-red">{s}</span>)}
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--glass-border)' }}>
-                    <h4 style={{ marginBottom: '0.5rem' }}>AI Evaluation Summary</h4>
-                    <p style={{ color: '#e2e8f0', lineHeight: '1.7' }}>{matchResult.summary}</p>
+                  <div className="evaluation-box">
+                    <h4>AI Evaluation Summary</h4>
+                    <p className="evaluation-text">{matchResult.summary}</p>
                   </div>
                 </div>
               ) : (
-                <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8', color: '#e2e8f0', fontFamily: 'Inter, sans-serif' }}>
+                <div className="evaluation-text" style={{ whiteSpace: 'pre-wrap' }}>
                   {matchResult}
                 </div>
               )}
             </div>
 
-            <footer style={{ marginTop: '3rem', display: 'flex', justifyContent: 'center', gap: '1.5rem' }}>
+            <footer className="report-footer">
               <button className="btn-action" style={{ background: 'var(--accent)', boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.4)' }} onClick={handleGenerateCoverLetter} disabled={loading}>
                 {loading ? <Loader2 className="loading-spinner" /> : <Send size={20} />}
                 {loading ? 'Assembling Letter...' : 'Generate AI Cover Letter'}
@@ -274,26 +300,26 @@ function App() {
         {/* Step 4: Cover Letter */}
         {step === 4 && (
           <div className="premium-card animate-slide-up">
-            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
+            <header className="report-header" style={{ flexWrap: 'wrap', gap: '1.5rem' }}>
               <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <Award size={24} color="var(--primary)" /> Tailored Cover Letter
               </h2>
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <button className="btn-secondary" onClick={() => {
-                  navigator.clipboard.writeText(coverLetter);
-                  alert("Copied to clipboard!");
-                }}>
-                  <Copy size={16} style={{ marginRight: '8px' }} /> Copy
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <button className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={handleCopy}>
+                  <Copy size={16} /> Copy Letter
+                </button>
+                <button className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={handleDownload}>
+                  <Download size={16} /> Download
                 </button>
                 <button className="btn-action" onClick={() => setStep(1)}>New Session</button>
               </div>
             </header>
 
-            <div style={{ whiteSpace: 'pre-wrap', background: 'white', padding: '4rem', borderRadius: '1rem', fontFamily: 'Inter, sans-serif', fontSize: '1.1rem', lineHeight: '1.7', color: '#334155', boxShadow: 'inset 0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+            <div className="paper-sheet">
               {coverLetter}
             </div>
             
-            <p style={{ textAlign: 'center', marginTop: '2rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+            <p className="note-text">
               Note: This letter was generated based on your resume and specifically matched to the job requirements.
             </p>
           </div>
