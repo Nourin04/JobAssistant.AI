@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 import shutil
 import os
 import json
-import time
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -32,10 +31,13 @@ from app.tasks.cover_letter_task import get_cover_letter_task
 
 app = FastAPI(title="Job Assistant AI API")
 
-# CORS Configuration
+# CORS — read allowed origin from environment so the same codebase works
+# locally (localhost:5173) and in production (Vercel URL).
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
+    allow_origins=[FRONTEND_URL],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -66,64 +68,77 @@ def _check_rate_limit(request: Request):
         )
     _rate_counters[ip].append(now)
 
+
 @app.get("/")
 async def root():
     return {"message": "Job Assistant AI API is running"}
+
+
+@app.get("/health")
+async def health():
+    """Health check endpoint. The frontend pings this on load to wake the
+    backend (Render free tier cold start) before the user starts interacting."""
+    return {"status": "healthy"}
 
 
 # Upload Resume + Process
 @app.post("/analyze")
 def analyze_resume(request: Request, file: UploadFile = File(...)):
     _check_rate_limit(request)
+
     file_path = f"temp_{file.filename}"
 
     # Save file
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Extract text
-    resume_text = extract_text_from_pdf(file_path)
-    candidate_name = extract_name(resume_text)
-
-    # Run Resume Agent
-    agent = get_resume_analyzer()
-    task = get_resume_task(agent, resume_text)
-
-    crew = Crew(agents=[agent], tasks=[task])
-    result = crew.kickoff()
-
-    output_text = result.raw
-
-    # Extract JSON
-    import re
-    match = re.search(r"\{.*\}", output_text, re.DOTALL)
-
-    if not match:
-        return {"error": "Invalid JSON output"}
-
     try:
-        parsed = json.loads(match.group(0))
-    except json.JSONDecodeError:
-        return {"error": "Failed to parse LLM output as JSON"}
+        # Extract text
+        resume_text = extract_text_from_pdf(file_path)
+        candidate_name = extract_name(resume_text)
 
-    parsed["name"] = candidate_name
+        # Run Resume Agent
+        agent = get_resume_analyzer()
+        task = get_resume_task(agent, resume_text)
 
-    # Store in RAG (Optional: handle exceptions here)
-    try:
-        store_resume_data(parsed)
-    except Exception as e:
-        print(f"RAG storage failed: {e}")
+        crew = Crew(agents=[agent], tasks=[task])
+        result = crew.kickoff()
 
-    if os.path.exists(file_path):
-        os.remove(file_path)
+        output_text = result.raw
 
-    return parsed
+        # Extract JSON
+        import re
+        match = re.search(r"\{.*\}", output_text, re.DOTALL)
+
+        if not match:
+            return {"error": "Invalid JSON output"}
+
+        try:
+            parsed = json.loads(match.group(0))
+        except json.JSONDecodeError:
+            return {"error": "Failed to parse LLM output as JSON"}
+
+        parsed["name"] = candidate_name
+
+        # Store in RAG
+        try:
+            store_resume_data(parsed)
+        except Exception as e:
+            print(f"RAG storage failed: {e}")
+
+        return parsed
+
+    finally:
+        # Always clean up the temp file
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
 
 # Job Matching
 @app.post("/match")
 def match_job(request: Request, data: dict):
     _check_rate_limit(request)
+
     resume_data = data["resume"]
     job_description = data["job_description"]
 
@@ -149,11 +164,9 @@ def match_job(request: Request, data: dict):
 @app.post("/cover-letter")
 def generate_cover_letter(request: Request, data: dict):
     _check_rate_limit(request)
+
     resume_data = data["resume"]
     job_description = data["job_description"]
-
-    # avoid rate limit
-    time.sleep(10)
 
     agent = get_cover_letter_generator()
     task = get_cover_letter_task(agent, resume_data, job_description)

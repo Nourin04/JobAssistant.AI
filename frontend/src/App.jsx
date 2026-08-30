@@ -46,6 +46,28 @@ function App() {
   const [error, setError] = useState(null);
   const [copySuccess, setCopySuccess] = useState(false);
   const [remainingCalls, setRemainingCalls] = useState(getRemainingCalls);
+  const [backendStatus, setBackendStatus] = useState('connecting'); // 'connecting' | 'ready' | 'slow'
+
+  // Ping /health on load to wake the backend (handles Render free-tier cold start)
+  useEffect(() => {
+    const controller = new AbortController();
+    const slowTimer = setTimeout(() => setBackendStatus('slow'), 8000);
+
+    axios.get(`${API_BASE}/health`, { signal: controller.signal, timeout: 90000 })
+      .then(() => {
+        clearTimeout(slowTimer);
+        setBackendStatus('ready');
+      })
+      .catch(() => {
+        clearTimeout(slowTimer);
+        setBackendStatus('slow');
+      });
+
+    return () => {
+      controller.abort();
+      clearTimeout(slowTimer);
+    };
+  }, []);
 
   useEffect(() => {
     if (error) {
@@ -201,6 +223,37 @@ function App() {
         <div className="copy-toast">
           <Check size={15} />
           <span>Copied to clipboard!</span>
+        </div>
+      )}
+
+      {/* Backend Wake-up Banner */}
+      {backendStatus !== 'ready' && (
+        <div
+          style={{
+            textAlign: 'center',
+            marginBottom: '1rem',
+            padding: '0.55rem 1.25rem',
+            borderRadius: '0.75rem',
+            border: `1px solid ${backendStatus === 'slow' ? 'rgba(234,179,8,0.25)' : 'rgba(255,255,255,0.06)'}`,
+            background: backendStatus === 'slow' ? 'rgba(234,179,8,0.04)' : 'rgba(255,255,255,0.02)',
+            fontSize: '0.8rem',
+            color: backendStatus === 'slow' ? '#fde68a' : 'var(--text-dim)',
+            fontWeight: 500,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
+          }}
+        >
+          <span style={{
+            width: '6px', height: '6px', borderRadius: '50%',
+            background: backendStatus === 'slow' ? '#f59e0b' : 'var(--text-dim)',
+            animation: 'pulse-glow 1.5s ease-in-out infinite',
+            flexShrink: 0,
+          }} />
+          {backendStatus === 'slow'
+            ? 'AI engine is waking up — this may take up to 60 seconds on the first visit.'
+            : 'Connecting to AI engine...'}
         </div>
       )}
 

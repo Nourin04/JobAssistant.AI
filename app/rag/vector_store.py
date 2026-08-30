@@ -1,5 +1,7 @@
 import chromadb
+import uuid
 from chromadb.utils import embedding_functions
+
 
 # Create embedding function
 embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
@@ -74,12 +76,13 @@ def store_resume_data(data: dict):
             proj_texts.append(text)
         documents.append("Projects: " + ", ".join(proj_texts))
 
-    # 🔄 Store in DB
-    for i, doc in enumerate(documents):
+    # Store in DB
+    for doc in documents:
         collection.add(
             documents=[doc],
-            ids=[f"doc_{i}"]
+            ids=[str(uuid.uuid4())]
         )
+
 
 
         
